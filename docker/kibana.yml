@@ -1,0 +1,35 @@
+# Kibana configuration for Docker container
+server.name: "SOF-ELK®"
+server.host: "0.0.0.0"
+server.port: 5601
+server.publicBaseUrl: "http://localhost:5601"
+
+# Elasticsearch settings
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.shardTimeout: 90000
+
+# Logging settings
+logging:
+  appenders:
+    file:
+      type: file
+      fileName: /var/log/kibana/kibana.log
+      layout:
+        type: json
+  root:
+    appenders:
+      - default
+      - file
+
+# Process ID file
+pid.file: /var/run/kibana/kibana.pid
+
+# Telemetry settings
+telemetry.optIn: false
+telemetry.allowChangingOptInStatus: false
+
+# Security warnings
+xpack.security.showInsecureClusterWarning: false
+
+# Dashboard settings
+xpack.encryptedSavedObjects.encryptionKey: "a".repeat(32)

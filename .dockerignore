@@ -1,0 +1,43 @@
+# Ignore version control
+.git
+.gitignore
+
+# Ignore documentation
+*.md
+FUNDING.yml
+LICENSE
+PULLREQUESTS.md
+
+# Ignore build artifacts and logs
+*.log
+*.tmp
+*.temp
+
+# Ignore local development files
+.env
+.env.local
+docker-compose.override.yml
+
+# Ignore sample/test data
+sample-data/
+test-data/
+data/
+
+# Ignore custom configurations (they should be mounted)
+custom-configs/
+
+# Ignore unsupported configurations during build
+configfiles-UNSUPPORTED/
+
+# Ignore templates (they'll be copied separately)
+configfiles-templates/
+
+# Ignore VM-specific files
+.vagrant/
+Vagrantfile
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

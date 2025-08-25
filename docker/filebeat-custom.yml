@@ -1,0 +1,25 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /data/*.log
+    - /data/**/*.log
+  fields:
+    log_type: "sof-elk-data"
+  fields_under_root: true
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /usr/share/filebeat/logs
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_docker_metadata: ~

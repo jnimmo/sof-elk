@@ -1,0 +1,134 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.0
+    container_name: sof-elk-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - action.destructive_requires_name=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./lib/elasticsearch_templates:/usr/share/elasticsearch/templates:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - sof-elk-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.1.0
+    container_name: sof-elk-logstash
+    environment:
+      - "LS_JAVA_OPTS=-Xms1g -Xmx1g"
+      - pipeline.ecs_compatibility=v8
+    volumes:
+      - logstash_data:/usr/share/logstash/data
+      - ./configfiles:/usr/share/logstash/pipeline:ro
+      - ./grok-patterns:/usr/share/logstash/patterns:ro
+      - ./lib/dictionaries:/usr/share/logstash/dictionaries:ro
+      - ./supporting-scripts:/usr/share/logstash/scripts:ro
+      - ./data:/data:rw
+      - ./docker/logstash-custom.yml:/usr/share/logstash/config/logstash.yml:ro
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    networks:
+      - sof-elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9600 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.1.0
+    container_name: sof-elk-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+      - server.name=SOF-ELK
+      - server.host=0.0.0.0
+      - server.publicBaseUrl=http://localhost:5601
+      - telemetry.optIn=false
+    volumes:
+      - ./docker/kibana-custom.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports:
+      - "5601:5601"
+    networks:
+      - sof-elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # SOF-ELK Initialization Container
+  sof-elk-init:
+    image: alpine:latest
+    container_name: sof-elk-init
+    volumes:
+      - ./lib/elasticsearch_templates:/templates:ro
+      - ./kibana:/kibana-configs:ro
+      - ./docker/init-elk.sh:/init-elk.sh:ro
+      - ./data:/data:rw
+    networks:
+      - sof-elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    command: ["/bin/sh", "/init-elk.sh"]
+    restart: "no"
+
+  # Optional: Filebeat for log shipping
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:9.1.0
+    container_name: sof-elk-filebeat
+    user: root
+    volumes:
+      - ./docker/filebeat-custom.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./data:/data:ro
+      - filebeat_data:/usr/share/filebeat/data
+      - /var/log:/host_logs:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - sof-elk-network
+    depends_on:
+      logstash:
+        condition: service_healthy
+    profiles:
+      - filebeat
+
+volumes:
+  elasticsearch_data:
+    driver: local
+  logstash_data:
+    driver: local
+  filebeat_data:
+    driver: local
+
+networks:
+  sof-elk-network:
+    driver: bridge

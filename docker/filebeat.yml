@@ -1,0 +1,25 @@
+# Filebeat configuration for Docker container
+filebeat.inputs:
+- type: log
+  enabled: false
+  paths:
+    - /var/log/*.log
+
+# Output to Logstash
+output.logstash:
+  hosts: ["logstash:5044"]
+
+# Logging
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+# Processors
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_docker_metadata: ~

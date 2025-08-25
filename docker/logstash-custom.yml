@@ -1,0 +1,12 @@
+node.name: "sof-elk-logstash"
+path.data: /usr/share/logstash/data
+pipeline.ecs_compatibility: v8
+pipeline.workers: 2
+pipeline.batch.size: 1000
+pipeline.batch.delay: 50
+config.reload.automatic: true
+config.reload.interval: 3s
+api.http.host: "0.0.0.0"
+api.http.port: 9600
+xpack.monitoring.enabled: false
+dead_letter_queue.enable: false

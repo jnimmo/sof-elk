@@ -1,0 +1,10 @@
+server.name: "SOF-ELK"
+server.host: "0.0.0.0"
+server.port: 5601
+server.publicBaseUrl: "http://localhost:5601"
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.shardTimeout: 90000
+telemetry.optIn: false
+telemetry.allowChangingOptInStatus: false
+xpack.security.showInsecureClusterWarning: false
+xpack.encryptedSavedObjects.encryptionKey: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

@@ -1,0 +1,23 @@
+# docker-compose.override.yml
+# This file contains development overrides for docker-compose.yml
+# It's automatically loaded when you run docker-compose up
+
+services:
+  elasticsearch:
+    environment:
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"  # Reduced memory for development
+    volumes:
+      # Mount local data directory for testing
+      - ./sample-data:/sample-data:ro
+
+  logstash:
+    environment:
+      - "LS_JAVA_OPTS=-Xms512m -Xmx512m"  # Reduced memory for development
+      - "LOG_LEVEL=debug"  # More verbose logging
+    volumes:
+      # Mount custom configs for development
+      - ./custom-configs:/custom-configs:ro
+
+  kibana:
+    environment:
+      - "LOGGING_ROOT_LEVEL=debug"  # More verbose logging

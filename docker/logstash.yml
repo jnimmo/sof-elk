@@ -1,0 +1,27 @@
+# Logstash configuration for Docker container
+node.name: "sof-elk-logstash"
+
+# Path settings
+path.data: /var/lib/logstash
+path.logs: /var/log/logstash
+path.config: /etc/logstash/conf.d
+
+# Pipeline settings
+pipeline.ecs_compatibility: v8
+pipeline.workers: 2
+pipeline.batch.size: 1000
+pipeline.batch.delay: 50
+
+# Configuration reload
+config.reload.automatic: true
+config.reload.interval: 3s
+
+# HTTP API settings
+api.http.host: "0.0.0.0"
+api.http.port: 9600
+
+# Monitoring
+xpack.monitoring.enabled: false
+
+# Dead letter queue
+dead_letter_queue.enable: false

@@ -1,0 +1,29 @@
+# Elasticsearch configuration for Docker container
+cluster.name: "sof-elk-cluster"
+node.name: "sof-elk-node"
+
+# Network settings
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# Path settings
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+
+# Discovery settings for single node
+discovery.type: single-node
+
+# Security settings (disabled for SOF-ELK compatibility)
+xpack.security.enabled: false
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
+
+# Allow wildcard deletion of indices
+action.destructive_requires_name: false
+
+# Memory settings
+bootstrap.memory_lock: true
+
+# Index settings
+indices.query.bool.max_clause_count: 10000
