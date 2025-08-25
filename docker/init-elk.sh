@@ -7,7 +7,7 @@ echo "Starting SOF-ELK initialization..."
 echo "Installing required tools..."
 apk add --no-cache curl jq
 
-# Create data directories structure
+# Create data directories structure (modern Docker approach)
 echo "Setting up data directories..."
 mkdir -p /data/zeek-logs
 mkdir -p /data/netflow
@@ -32,52 +32,92 @@ mkdir -p /data/ssh
 mkdir -p /data/firewall
 mkdir -p /data/forensics
 
+# Also create VM-compatible /logstash directories for filebeat compatibility
+# These match the directories from ansible/roles/filebeat/tasks/main.yml
+echo "Creating VM-compatible /logstash directories..."
+mkdir -p /data/aws
+mkdir -p /data/azure  # already created above
+mkdir -p /data/gcp    # already created above
+mkdir -p /data/gws
+mkdir -p /data/hayabusa  # already created above
+mkdir -p /data/httpd
+mkdir -p /data/kape   # already created above
+mkdir -p /data/kubernetes
+mkdir -p /data/microsoft365
+mkdir -p /data/nfarch
+mkdir -p /data/passivedns
+mkdir -p /data/plaso  # already created above
+mkdir -p /data/syslog # already created above
+mkdir -p /data/zeek
+
 # Create README file with directory explanations
 cat > /data/README.md << 'EOF'
 # SOF-ELK Data Directory Structure
 
 This directory contains subdirectories for different types of log data that SOF-ELK can automatically process.
 
-## Directory Structure:
+## Key Directories for Specific Log Types:
 
-- **zeek-logs/**: Zeek/Bro network analysis logs (.log files)
-- **netflow/**: NetFlow data files
-- **sysmon/**: Windows Sysmon logs
-- **apache/**: Apache web server logs
-- **nginx/**: Nginx web server logs  
-- **iis/**: Microsoft IIS web server logs
-- **suricata/**: Suricata IDS logs
-- **snort/**: Snort IDS logs
-- **cloudtrail/**: AWS CloudTrail logs
-- **azure/**: Azure cloud logs
-- **gcp/**: Google Cloud Platform logs
-- **plaso/**: Plaso timeline data
+### Forensic Tools:
 - **kape/**: KAPE forensic artifacts
-- **hayabusa/**: Hayabusa Windows event analysis results
-- **windows-events/**: Windows Event logs (.evtx files)
+  - Place *_EvtxECmd_Output.json files here for Windows Event analysis
+  - Place *_MFTECmd_Output.json files here for filesystem analysis  
+  - Place *_LECmd_Output.json files here for link file analysis
+- **plaso/**: Plaso timeline data (.csv files)
+- **hayabusa/**: Hayabusa Windows event analysis (.csv files)
+
+### Network Analysis:
+- **zeek/**: Zeek/Bro network analysis logs (conn.*, dns.*, http.*, ssl.*, etc.)
+- **netflow/**: NetFlow data files
+- **nfarch/**: Archived NetFlow data
+
+### Cloud Logs:
+- **aws/**: AWS CloudTrail logs (.json)
+- **azure/**: Azure cloud logs (.json)
+- **gcp/**: Google Cloud Platform logs (.json)
+- **gws/**: Google Workspace logs (.json)
+- **microsoft365/**: Microsoft 365 logs (.json)
+- **kubernetes/**: Kubernetes logs (.json)
+
+### Web Server Logs:
+- **httpd/**: Apache web server logs
+- **nginx/**: Nginx web server logs (via custom configs)
+- **iis/**: Microsoft IIS web server logs (via custom configs)
+
+### System & Security:
 - **syslog/**: System logs
-- **dhcp/**: DHCP server logs
-- **dns/**: DNS server logs
-- **ssh/**: SSH server logs
-- **firewall/**: Firewall logs
-- **forensics/**: General forensic artifacts
+- **passivedns/**: Passive DNS data (.json)
+- **suricata/**: Suricata IDS logs (via custom configs)
+
+### General:
 - **custom/**: Custom log formats
 
 ## Usage:
 
-1. Place your log files in the appropriate subdirectory
-2. SOF-ELK will automatically detect and process supported formats
-3. View processed data in Kibana at http://localhost:5601
+1. **Enable Filebeat** (recommended): `docker-compose --profile filebeat up -d`
+2. Place your log files in the appropriate subdirectory above
+3. Filebeat will automatically detect files and assign correct labels
+4. View processed data in Kibana at http://localhost:5601
 
-## File Formats Supported:
+## Example - Your Evtxecmd JSON Issue:
 
-- .log files (various formats)
-- .evtx (Windows Event logs)
-- .json (structured logs)
-- .csv (comma-separated values)
-- .txt (text logs)
+```bash
+# Place your Evtxecmd file in the kape directory:
+cp /path/to/20240805055604_EvtxECmd_Output.json data/kape/
 
-Files are monitored recursively, so you can create additional subdirectories as needed.
+# Filebeat will automatically detect it and assign labels.type: kape_evtxlogs
+# Logstash will process it with the correct parser
+```
+
+## File Format Support:
+
+The system automatically detects and processes:
+- **.json files** (cloud logs, structured data)
+- **.csv files** (forensic timelines, analysis outputs) 
+- **.log files** (network analysis, web servers, system logs)
+- **Pattern-based files** (Zeek: conn.*, dns.*, http.*, etc.)
+
+Files are monitored recursively within each directory.
 EOF
 
 # Set proper permissions (only on subdirectories, not the mount point)

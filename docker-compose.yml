@@ -28,18 +28,24 @@ services:
       start_period: 30s
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:9.1.0
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.logstash
     container_name: sof-elk-logstash
     environment:
       - "LS_JAVA_OPTS=-Xms1g -Xmx1g"
-      - pipeline.ecs_compatibility=v8
     volumes:
       - logstash_data:/usr/share/logstash/data
       - ./configfiles:/usr/share/logstash/pipeline:ro
-      - ./grok-patterns:/usr/share/logstash/patterns:ro
-      - ./lib/dictionaries:/usr/share/logstash/dictionaries:ro
-      - ./supporting-scripts:/usr/share/logstash/scripts:ro
+      # Map VM paths to Docker paths to maintain config compatibility
+      - ./grok-patterns:/usr/local/sof-elk/grok-patterns:ro
+      - ./lib/dictionaries:/usr/local/sof-elk/lib/dictionaries:ro
+      - ./supporting-scripts:/usr/local/sof-elk/supporting-scripts:ro
+      # Mount GeoIP directory (databases need to be downloaded separately)  
+      - ./geoip:/usr/local/share/GeoIP:rw
       - ./data:/data:rw
+      # Create /logstash directory structure from VM for input compatibility
+      - ./data:/logstash:rw
       - ./docker/logstash-custom.yml:/usr/share/logstash/config/logstash.yml:ro
     ports:
       - "5044:5044"
@@ -108,7 +114,11 @@ services:
     user: root
     volumes:
       - ./docker/filebeat-custom.yml:/usr/share/filebeat/filebeat.yml:ro
+      # Mount the VM filebeat input configurations
+      - ./lib/filebeat_inputs:/usr/local/sof-elk/lib/filebeat_inputs:ro
+      # Map data directory to both /data and /logstash for VM compatibility
       - ./data:/data:ro
+      - ./data:/logstash:ro
       - filebeat_data:/usr/share/filebeat/data
       - /var/log:/host_logs:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro

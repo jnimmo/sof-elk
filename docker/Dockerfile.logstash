@@ -1,0 +1,8 @@
+FROM docker.elastic.co/logstash/logstash:9.1.0
+
+# Install missing plugins required by SOF-ELK configurations
+RUN logstash-plugin install logstash-filter-json_encode
+RUN logstash-plugin install logstash-input-relp
+
+# Set user back to logstash
+USER logstash

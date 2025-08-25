@@ -1,12 +1,7 @@
-filebeat.inputs:
-- type: log
+# Use the same dynamic input loading as the VM deployment
+filebeat.config.inputs:
   enabled: true
-  paths:
-    - /data/*.log
-    - /data/**/*.log
-  fields:
-    log_type: "sof-elk-data"
-  fields_under_root: true
+  path: /usr/local/sof-elk/lib/filebeat_inputs/*.yml
 
 output.logstash:
   hosts: ["logstash:5044"]

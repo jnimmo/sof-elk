@@ -13,7 +13,6 @@ services:
   logstash:
     environment:
       - "LS_JAVA_OPTS=-Xms512m -Xmx512m"  # Reduced memory for development
-      - "LOG_LEVEL=debug"  # More verbose logging
     volumes:
       # Mount custom configs for development
       - ./custom-configs:/custom-configs:ro
